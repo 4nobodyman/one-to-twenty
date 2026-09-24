@@ -216,6 +216,12 @@
     letter-spacing:.04em;display:flex;flex-wrap:wrap;justify-content:center;
   }
   .spell .miss{color:var(--bad);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:5px;}
+  /* Похвала — тёмным по цветной плашке: зелёным по зелёному читалось бы хуже */
+  .cheer{
+    margin:0;font-family:"Fredoka","Nunito",sans-serif;color:var(--ink);
+    font-size:16.5px;font-weight:500;line-height:1.35;text-align:center;max-width:34ch;
+  }
+  .cheer b{font-weight:600;color:var(--accent);}
   .tip{margin:0;font-size:13.5px;color:var(--muted);font-weight:600;max-width:42ch;}
   .tip b{color:var(--ink);}
 
@@ -283,6 +289,13 @@
   .win-box{background:var(--surface);border-radius:22px;padding:26px 22px;text-align:center;max-width:380px;display:flex;flex-direction:column;gap:12px;align-items:center;box-shadow:var(--shadow-md);}
   .win-box h2{font-family:"Fredoka","Nunito",sans-serif;margin:0;font-size:24px;font-weight:600;color:var(--accent);}
   .win-box p{margin:0;font-size:14.5px;color:var(--muted);font-weight:600;}
+  .win-box input[type="text"]{width:100%;font-size:24px;padding:11px 12px;}
+  .win-box .btn{width:100%;}
+  .linkish{
+    background:none;border:0;padding:4px;cursor:pointer;
+    color:var(--muted);text-decoration:underline;font-weight:700;font-size:13px;
+  }
+  .foot .hello{color:var(--ink);font-weight:800;}
 
   /* ---------- телефон, вертикально ---------- */
   @media (max-width:560px){
@@ -299,6 +312,7 @@
     .helpers{width:100%;}
     .helpers .btn.small{flex:1 1 0;min-width:86px;min-height:42px;padding:10px 8px;}
     .spell{font-size:30px;}
+    .cheer{font-size:15.5px;}
     .tip{font-size:13px;}
     .voicebar{padding:7px 10px;gap:6px;}
     .voicebar select{min-width:0;font-size:13px;}
@@ -386,6 +400,7 @@
 
     <div class="verdict" id="verdict" hidden>
       <h2 id="verdictTitle"></h2>
+      <p class="cheer" id="cheer" hidden></p>
       <div class="spell" id="spell"></div>
       <p class="tip" id="tip"></p>
       <button class="btn" id="nextBtn">Дальше</button>
@@ -410,12 +425,22 @@
     <button class="btn ghost small" id="tryVoice">Проверить</button>
   </div>
 
-  <p class="foot">Слово засчитано, когда написал его верно <b>три раза подряд</b>. <button id="resetBtn">Начать заново</button></p>
+  <p class="foot"><span class="hello" id="hello"></span>Слово засчитано, когда напишешь его верно <b>три раза подряд</b>. <button id="resetBtn">Начать заново</button> · <button id="nameBtn">Сменить имя</button></p>
+</div>
+
+<div class="win" id="nameOverlay" hidden>
+  <div class="win-box">
+    <h2>Привет! Как тебя зовут?</h2>
+    <p>Буду звать тебя по имени, когда получится хорошо.</p>
+    <input type="text" id="nameInput" maxlength="18" placeholder="имя" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Имя">
+    <button class="btn" id="nameGo">Поехали!</button>
+    <button class="linkish" id="nameSkip">Играть без имени</button>
+  </div>
 </div>
 
 <div class="win" id="winOverlay" hidden>
   <div class="win-box">
-    <h2>Все 20 чисел выучены!</h2>
+    <h2 id="winTitle">Все 20 чисел выучены!</h2>
     <p id="winLine">Отличная работа.</p>
     <button class="btn" id="winClose">Ещё разок</button>
   </div>
@@ -458,7 +483,53 @@
 
   var KEY = "one-to-twenty-v1";
 
+  // ---------- похвала ----------
+  // {name} — имя, {word} — слово, {num} — число, {n} — длина серии.
+  // Формулировки без родовых окончаний: подходят и мальчику, и девочке.
+  var CHEER_STREAK = {
+    3:[ "{name}, три верных подряд! Пошло-поехало.",
+        "Три из трёх, {name}. Так и держи!",
+        "{name}, три слова без ошибки. Отличное начало." ],
+    5:[ "Пять подряд! {name}, это уже настоящая серия.",
+        "{name}, пять верных слов и ни одной ошибки.",
+        "Пять из пяти, {name}. Сегодня ты в ударе." ],
+    7:[ "Семь подряд! 🎉 {name}, это очень круто.",
+        "{name}, семь верных слов — рука ни разу не дрогнула.",
+        "Семь из семи, {name}. Кто-то тут очень внимательный." ],
+    10:[ "Десять подряд! 🎉 {name}, это рекордная серия.",
+         "{name}, десять верных слов без единой ошибки. Ого!",
+         "Десять из десяти! {name}, английский тебя зауважал." ],
+    15:[ "Пятнадцать подряд! 🏆 {name}, это уже мастерство.",
+         "{name}, пятнадцать слов без ошибки. Невероятно!" ],
+    20:[ "Двадцать подряд! 🏆 {name}, ты настоящий чемпион.",
+         "{name}, двадцать верных слов. Высший пилотаж!" ]
+  };
+  var CHEER_BIG = [
+    "{n} подряд! 🏆 {name}, это фантастика.",
+    "{name}, уже {n} верных подряд. Остановить невозможно!"
+  ];
+  var CHEER_MASTER = [
+    "Слово <b>{word}</b> выучено! Теперь оно твоё, {name}. 🎉",
+    "{name}, три раза верно — <b>{word}</b> отправляется в копилку! 🎉",
+    "Готово: <b>{word}</b> больше тебя не подловит, {name}.",
+    "{name}, {num} по-английски — <b>{word}</b>. Выучено!",
+    "Есть! <b>{word}</b> запомнено крепко-накрепко, {name}. ⭐"
+  ];
+  // Идут второй фразой после CHEER_MASTER — имя там уже прозвучало
+  var CHEER_HALF = {
+    5:[ "Уже пять слов из двадцати!" ],
+    10:[ "Половина пути пройдена — десять из двадцати! 🎉" ],
+    15:[ "Пятнадцать из двадцати. Финиш совсем близко!" ]
+  };
+  var CHEER_LOST = [
+    "{name}, серия из {n} — это было здорово. Начинаем новую!",
+    "Было {n} подряд, {name}. Такое не пропадает — давай ещё!",
+    "{name}, после {n} верных можно и споткнуться. Дальше!"
+  ];
+
   var state = {
+    name:"",
+    named:false,        // имя уже спрашивали (или ребёнок отказался)
     mode:"dictation",
     n:null,
     score:0,
@@ -478,11 +549,15 @@
       if(d && typeof d === "object"){
         state.score = d.score || 0;
         state.mastery = d.mastery || {};
+        state.name = typeof d.name === "string" ? d.name : "";
+        state.named = !!d.named;
       }
     }catch(e){}
   }
   function save(){
-    try{ localStorage.setItem(KEY, JSON.stringify({score:state.score, mastery:state.mastery})); }catch(e){}
+    try{ localStorage.setItem(KEY, JSON.stringify({
+      score:state.score, mastery:state.mastery, name:state.name, named:state.named
+    })); }catch(e){}
   }
 
   // ---------- elements ----------
@@ -494,9 +569,11 @@
   var elSlots=$("slots"), elAnswer=$("answer"), elCheck=$("checkBtn");
   var elHint=$("hintBtn"), elRepeat=$("repeatBtn"), elSkip=$("skipBtn");
   var elVerdict=$("verdict"), elVerdictTitle=$("verdictTitle"), elSpell=$("spell"), elTip=$("tip"), elNext=$("nextBtn");
+  var elCheer=$("cheer"), elHello=$("hello");
+  var elNameOv=$("nameOverlay"), elNameInput=$("nameInput");
   var elTrack=$("track"), elMastered=$("masteredCount");
   var elLearnGrid=$("learnGrid"), elLearnNote=$("learnNote");
-  var elWin=$("winOverlay"), elWinClose=$("winClose"), elWinLine=$("winLine");
+  var elWin=$("winOverlay"), elWinClose=$("winClose"), elWinLine=$("winLine"), elWinTitle=$("winTitle");
 
   // ---------- speech ----------
   var speechWorks = ("speechSynthesis" in window);
@@ -742,6 +819,66 @@
     return (s||"").toLowerCase().replace(/[^a-z]/g, "");
   }
 
+  // ---------- похвала ----------
+  function esc(t){
+    return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+                    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  // Не повторяем подряд одну и ту же фразу из списка
+  function pick(list){
+    if(list.length === 1) return list[0];
+    var i = Math.floor(Math.random()*list.length);
+    if(i === list._last) i = (i + 1) % list.length;
+    list._last = i;
+    return list[i];
+  }
+  function fill(tpl, vars){
+    vars = vars || {};
+    var t = tpl;
+    if(state.name){
+      t = t.replace(/\{name\}/g, esc(state.name));
+    }else{
+      // без имени убираем обращение целиком, не ломая предложение
+      t = t.replace(/\{name\}, /g, "").replace(/,? \{name\}/g, "").replace(/\{name\}/g, "ты");
+      // заглавная в начале каждого предложения, даже если перед словом смайлик;
+      // сегмент, начинающийся с тега (<b>word</b>), не трогаем
+      t = t.split(/([.!?]+\s*)/).map(function(part){
+        return part.replace(/^([^\p{L}<]*)(\p{Ll})/u, function(_, pre, ch){ return pre + ch.toUpperCase(); });
+      }).join("");
+    }
+    return t.replace(/\{word\}/g, vars.word || "")
+            .replace(/\{num\}/g, vars.num || "")
+            .replace(/\{n\}/g, vars.n || "");
+  }
+  function streakTier(n){
+    if(CHEER_STREAK[n]) return n;
+    if(n > 20 && n % 10 === 0) return "big";
+    return null;
+  }
+  function setCheer(html){
+    if(!html){ elCheer.hidden = true; elCheer.innerHTML = ""; return; }
+    elCheer.innerHTML = html;
+    elCheer.hidden = false;
+    elCheer.classList.remove("pop");
+    void elCheer.offsetWidth;
+    elCheer.classList.add("pop");
+  }
+  function praise(mastered, tier){
+    var word = WORDS[state.n-1];
+    var parts = [];
+    if(mastered){
+      parts.push(fill(pick(CHEER_MASTER), {word:word, num:state.n}));
+      var total = masteredTotal();
+      if(CHEER_HALF[total]) parts.push(fill(pick(CHEER_HALF[total])));
+      if(tier) parts.push("И это " + state.streak + " подряд!");
+    }else if(tier){
+      parts.push(tier === "big"
+        ? fill(pick(CHEER_BIG), {n:state.streak})
+        : fill(pick(CHEER_STREAK[tier])));
+    }
+    return parts.join(" ");
+  }
+
   function showSpelling(userWord){
     var right = WORDS[state.n-1];
     elSpell.innerHTML = "";
@@ -761,21 +898,22 @@
     elVerdict.className = "verdict " + (correct ? "good" : "bad");
 
     var m = masteryOf(state.n);
+    var hadStreak = state.streak;
     if(correct){
       var fast = (Date.now() - state.askedAt) < 6000;
       var gain = 1 + (state.hintLevel ? 0 : 1) + (fast ? 1 : 0);
       state.score += gain;
       state.streak += 1;
       state.mastery[state.n] = Math.min(3, m + 1);
-      elVerdictTitle.textContent = state.streak >= 5
-        ? "Верно! " + state.streak + " подряд — так держать"
-        : "Верно! +" + gain;
+      elVerdictTitle.textContent = "Верно! +" + gain;
+      setCheer(praise(m < 3 && state.mastery[state.n] === 3, streakTier(state.streak)));
       showSpelling(null);
       dingUp();
     }else{
       state.streak = 0;
       state.mastery[state.n] = 0;
       elVerdictTitle.textContent = "Почти. Смотри, где буквы разошлись";
+      setCheer(hadStreak >= 3 ? fill(pick(CHEER_LOST), {n:hadStreak}) : "");
       showSpelling(userWord);
       dingDown();
     }
@@ -789,6 +927,9 @@
     elNext.focus();
 
     if(masteredTotal() === 20 && correct){
+      elWinTitle.textContent = state.name
+        ? state.name + ", все 20 чисел выучены!"
+        : "Все 20 чисел выучены!";
       elWinLine.textContent = "Все двадцать слов написаны верно по три раза. Очков: " + state.score + ".";
       elWin.hidden = false;
     }
@@ -805,6 +946,31 @@
     elScore.textContent = state.score;
     elStreak.textContent = state.streak;
     elStreakChip.className = "chip" + (state.streak >= 3 ? " streak-hot" : "");
+  }
+
+  // ---------- имя ----------
+  function paintHello(){
+    elHello.textContent = state.name ? "Привет, " + state.name + "! " : "";
+  }
+  function askName(){
+    elNameInput.value = state.name || "";
+    elNameOv.hidden = false;
+    setTimeout(function(){ elNameInput.focus(); elNameInput.select(); }, 30);
+  }
+  function closeName(){
+    elNameOv.hidden = true;
+    paintHello();
+    save();
+    if(state.mode !== "learn" && !state.answered) elAnswer.focus();
+  }
+  function submitName(){
+    var v = (elNameInput.value || "").replace(/[^\p{L}\p{M}\- ]/gu, "");
+    v = v.replace(/\s+/g, " ").trim().slice(0, 18).trim();
+    // «анна-мария» -> «Анна-Мария»
+    v = v.replace(/(^|[ -])(\p{L})/gu, function(_, sep, ch){ return sep + ch.toUpperCase(); });
+    state.name = v;
+    state.named = true;
+    closeName();
   }
 
   // ---------- learn mode ----------
@@ -886,7 +1052,7 @@
   });
   document.addEventListener("keydown", function(e){
     if(e.key !== "Enter") return;
-    if(!state.answered || !elWin.hidden) return;
+    if(!state.answered || !elWin.hidden || !elNameOv.hidden) return;
     if(e.target === elNext) return;       // кнопка сама сработает по Enter
     e.preventDefault();
     advance();
@@ -902,6 +1068,20 @@
     state.streak = 0;
     save();
     newRound(true);
+  });
+
+  $("nameGo").addEventListener("click", submitName);
+  $("nameSkip").addEventListener("click", function(){
+    state.name = "";
+    state.named = true;
+    closeName();
+  });
+  $("nameBtn").addEventListener("click", askName);
+  elNameInput.addEventListener("keydown", function(e){
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    e.stopPropagation();
+    submitName();
   });
 
   $("voiceSel").addEventListener("change", function(){
@@ -933,6 +1113,9 @@
   }
   setMode("dictation");
   elVerdict.hidden = true;
+  setCheer("");
+  paintHello();
+  if(!state.named) askName();
 })();
 </script>
 </body>
