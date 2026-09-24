@@ -1,0 +1,874 @@
+<title>One to Twenty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#EFF1FB;
+    --surface:#FFFFFF;
+    --surface-2:#E4E6F7;
+    --ink:#1B1A33;
+    --muted:#6A6890;
+    --line:#D7D9EE;
+    --accent:#4B3BD6;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#E6E3FD;
+    --gold:#E08C0B;
+    --gold-soft:#FBEBCB;
+    --good:#13917C;
+    --good-soft:#D5F0EA;
+    --bad:#D43449;
+    --bad-soft:#FBDEE1;
+    --shadow-sm:0 1px 0 rgba(27,26,51,.06), 0 6px 18px -12px rgba(27,26,51,.55);
+    --shadow-md:0 2px 0 rgba(27,26,51,.07), 0 18px 40px -24px rgba(27,26,51,.65);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141328;
+      --surface:#201F3C;
+      --surface-2:#2B2A4D;
+      --ink:#ECEBFA;
+      --muted:#9A98C2;
+      --line:#35345C;
+      --accent:#8C7BFF;
+      --accent-ink:#17162C;
+      --accent-soft:#2E2B58;
+      --gold:#F5B546;
+      --gold-soft:#3A2F17;
+      --good:#3FD3B6;
+      --good-soft:#123A34;
+      --bad:#FF7082;
+      --bad-soft:#3E1D25;
+      --shadow-sm:0 1px 0 rgba(0,0,0,.25), 0 6px 18px -12px rgba(0,0,0,.9);
+      --shadow-md:0 2px 0 rgba(0,0,0,.3), 0 18px 40px -24px rgba(0,0,0,1);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141328;
+    --surface:#201F3C;
+    --surface-2:#2B2A4D;
+    --ink:#ECEBFA;
+    --muted:#9A98C2;
+    --line:#35345C;
+    --accent:#8C7BFF;
+    --accent-ink:#17162C;
+    --accent-soft:#2E2B58;
+    --gold:#F5B546;
+    --gold-soft:#3A2F17;
+    --good:#3FD3B6;
+    --good-soft:#123A34;
+    --bad:#FF7082;
+    --bad-soft:#3E1D25;
+    --shadow-sm:0 1px 0 rgba(0,0,0,.25), 0 6px 18px -12px rgba(0,0,0,.9);
+    --shadow-md:0 2px 0 rgba(0,0,0,.3), 0 18px 40px -24px rgba(0,0,0,1);
+    color-scheme: dark;
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size:16px;
+    line-height:1.45;
+    -webkit-text-size-adjust:100%;
+  }
+  *{box-sizing:border-box;}
+  /* Свои display:flex/grid перебивают браузерное [hidden]{display:none} — возвращаем приоритет */
+  [hidden]{display:none!important;}
+  button{font:inherit;color:inherit;}
+  :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px;}
+
+  .app{
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    max-width:760px;
+    margin:0 auto;
+    padding-inline:16px;
+    padding-block:14px 18px;
+  }
+
+  /* ---------- header ---------- */
+  .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .brand{
+    font-family:"Fredoka", "Nunito", system-ui, sans-serif;
+    font-weight:600;font-size:19px;letter-spacing:-.01em;margin:0;
+    display:flex;align-items:baseline;gap:8px;
+  }
+  .brand b{color:var(--accent);font-weight:600;}
+  .brand span{font-family:"Nunito",sans-serif;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;}
+  .scoreboard{margin-left:auto;display:flex;gap:6px;}
+  .chip{
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;
+    padding:5px 11px;display:flex;align-items:center;gap:6px;
+    font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;
+    box-shadow:var(--shadow-sm);
+  }
+  .chip small{font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;}
+  .chip.streak-hot{border-color:var(--gold);background:var(--gold-soft);color:var(--gold);}
+
+  .modes{display:flex;gap:6px;background:var(--surface-2);padding:4px;border-radius:14px;}
+  .modes button{
+    flex:1;border:0;background:transparent;border-radius:10px;
+    padding:9px 6px;font-weight:800;font-size:13.5px;cursor:pointer;
+    color:var(--muted);transition:background .15s, color .15s;
+  }
+  .modes button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);}
+
+  /* ---------- play card ---------- */
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:var(--shadow-md);padding:20px 18px;
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+  }
+  .prompt-label{
+    font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);text-align:center;margin:0;
+  }
+
+  .listen{
+    width:128px;height:128px;border-radius:50%;
+    border:0;background:var(--accent);color:var(--accent-ink);
+    display:grid;place-items:center;cursor:pointer;
+    box-shadow:0 10px 26px -12px var(--accent);
+    transition:transform .12s ease;
+  }
+  .listen:hover{transform:scale(1.04);}
+  .listen:active{transform:scale(.96);}
+  .listen svg{width:52px;height:52px;}
+  .listen.ringing{animation:ring .7s ease;}
+  @keyframes ring{0%,100%{transform:scale(1)}35%{transform:scale(1.08)}}
+
+  .digit{
+    font-family:"Fredoka","Nunito",sans-serif;
+    font-weight:600;font-size:104px;line-height:1;
+    letter-spacing:-.04em;color:var(--accent);
+    font-variant-numeric:tabular-nums;
+    display:flex;align-items:center;gap:14px;
+  }
+  .digit .say{
+    border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+    width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none;
+  }
+  .digit .say svg{width:20px;height:20px;}
+  .pop{animation:pop .3s ease;}
+  @keyframes pop{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
+
+  .answer-row{display:flex;gap:8px;width:100%;max-width:440px;}
+  input[type="text"]{
+    flex:1;min-width:0;
+    font-family:"Fredoka","Nunito",sans-serif;font-size:26px;font-weight:500;
+    letter-spacing:.02em;text-align:center;
+    padding:12px 14px;border-radius:14px;
+    border:2px solid var(--line);background:var(--bg);color:var(--ink);
+  }
+  input[type="text"]::placeholder{color:var(--muted);opacity:.55;font-size:20px;letter-spacing:.14em;}
+  input[type="text"]:focus{border-color:var(--accent);outline:none;}
+  input[type="text"]:disabled{opacity:.75;}
+
+  .btn{
+    border:0;border-radius:14px;padding:12px 18px;font-weight:800;font-size:15px;
+    cursor:pointer;background:var(--accent);color:var(--accent-ink);
+    box-shadow:0 6px 16px -10px var(--accent);white-space:nowrap;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn.ghost{background:var(--surface-2);color:var(--ink);box-shadow:none;}
+  .btn.small{padding:8px 13px;font-size:13.5px;border-radius:11px;}
+
+  .helpers{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+
+  .slots{
+    display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:22px;
+    font-family:"Fredoka","Nunito",sans-serif;font-size:19px;letter-spacing:.16em;color:var(--muted);
+  }
+
+  /* ---------- feedback ---------- */
+  .verdict{width:100%;max-width:460px;border-radius:16px;padding:13px 15px;display:flex;flex-direction:column;gap:7px;align-items:center;text-align:center;}
+  .verdict.good{background:var(--good-soft);}
+  .verdict.bad{background:var(--bad-soft);}
+  .verdict h2{margin:0;font-family:"Fredoka","Nunito",sans-serif;font-size:17px;font-weight:600;}
+  .verdict.good h2{color:var(--good);}
+  .verdict.bad h2{color:var(--bad);}
+  .spell{
+    font-family:"Fredoka","Nunito",sans-serif;font-size:34px;font-weight:600;
+    letter-spacing:.04em;display:flex;flex-wrap:wrap;justify-content:center;
+  }
+  .spell .miss{color:var(--bad);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:5px;}
+  .tip{margin:0;font-size:13.5px;color:var(--muted);font-weight:600;max-width:42ch;}
+  .tip b{color:var(--ink);}
+
+  /* ---------- learn mode ---------- */
+  .learn-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;}
+  .learn-cell{
+    border:1px solid var(--line);background:var(--surface);border-radius:14px;
+    padding:9px 6px;cursor:pointer;text-align:center;display:flex;flex-direction:column;gap:2px;align-items:center;
+    box-shadow:var(--shadow-sm);
+  }
+  .learn-cell:hover{border-color:var(--accent);}
+  .learn-cell .n{font-family:"Fredoka","Nunito",sans-serif;font-size:20px;font-weight:600;color:var(--accent);line-height:1.1;}
+  .learn-cell .w{font-family:"Fredoka","Nunito",sans-serif;font-size:14px;font-weight:500;word-break:break-all;line-height:1.15;}
+  .learn-cell .w u{text-decoration:none;color:var(--gold);}
+  .learn-note{
+    background:var(--gold-soft);border-radius:14px;padding:11px 14px;
+    font-size:13.5px;font-weight:600;color:var(--ink);width:100%;
+  }
+  .learn-note b{color:var(--gold);}
+
+  /* ---------- progress ---------- */
+  .progress h3{
+    margin:0 0 7px;font-size:12px;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;
+  }
+  .progress h3 em{font-style:normal;margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:0;font-size:13px;}
+  .track{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;}
+  .cellwrap{display:flex;flex-direction:column;gap:3px;}
+  .cell{
+    aspect-ratio:1;border-radius:9px;background:var(--surface);border:1px solid var(--line);
+    display:grid;place-items:center;font-size:12.5px;font-weight:800;color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .cell.l1{background:var(--accent-soft);color:var(--accent);border-color:transparent;}
+  .cell.l2{background:var(--accent);color:var(--accent-ink);border-color:transparent;}
+  .cell.now{box-shadow:0 0 0 3px var(--gold);}
+
+  .foot{font-size:12.5px;color:var(--muted);text-align:center;font-weight:600;}
+  .foot button{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-weight:600;font-size:12.5px;}
+
+  .voicebar{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:8px 12px;box-shadow:var(--shadow-sm);
+  }
+  .voicebar label{font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  .voicebar select{
+    flex:1;min-width:150px;max-width:340px;
+    font-family:"Nunito",system-ui,sans-serif;font-size:13.5px;font-weight:700;
+    padding:7px 10px;border-radius:10px;
+    border:1px solid var(--line);background:var(--bg);color:var(--ink);
+  }
+  .voicebar .btn.small{flex:none;}
+  .voicebar .warn{font-size:12.5px;color:var(--muted);font-weight:600;text-align:center;}
+
+  /* ---------- win ---------- */
+  .win{
+    position:fixed;inset:0;background:rgba(27,26,51,.72);backdrop-filter:blur(3px);
+    display:grid;place-items:center;padding:24px;z-index:9;
+  }
+  .win-box{background:var(--surface);border-radius:22px;padding:26px 22px;text-align:center;max-width:380px;display:flex;flex-direction:column;gap:12px;align-items:center;box-shadow:var(--shadow-md);}
+  .win-box h2{font-family:"Fredoka","Nunito",sans-serif;margin:0;font-size:24px;font-weight:600;color:var(--accent);}
+  .win-box p{margin:0;font-size:14.5px;color:var(--muted);font-weight:600;}
+
+  @media (max-width:430px){
+    .digit{font-size:80px;}
+    .listen{width:112px;height:112px;}
+    .learn-grid{grid-template-columns:repeat(3,1fr);}
+    .brand span{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
+  }
+</style>
+
+<div class="app">
+  <div class="top">
+    <h1 class="brand"><b>One to Twenty</b> <span>числа прописью</span></h1>
+    <div class="scoreboard">
+      <div class="chip"><small>очки</small><span id="score">0</span></div>
+      <div class="chip" id="streakChip"><small>подряд</small><span id="streak">0</span></div>
+    </div>
+  </div>
+
+  <div class="modes" role="group" aria-label="Режим">
+    <button id="mDictation" aria-pressed="true">Диктант</button>
+    <button id="mFlash" aria-pressed="false">Молния</button>
+    <button id="mLearn" aria-pressed="false">Учим слова</button>
+  </div>
+
+  <!-- PLAY -->
+  <section class="card" id="playCard">
+    <p class="prompt-label" id="promptLabel">Нажми и послушай число</p>
+
+    <button class="listen" id="listenBtn" aria-label="Послушать число">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+      </svg>
+    </button>
+
+    <div class="digit" id="digitBox" hidden>
+      <span id="digitValue">7</span>
+      <button class="say" id="sayBtn" aria-label="Произнести">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="slots" id="slots"></div>
+
+    <div class="answer-row">
+      <input type="text" id="answer" placeholder="напиши слово" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Число словами по-английски">
+      <button class="btn" id="checkBtn">Проверить</button>
+    </div>
+
+    <div class="helpers">
+      <button class="btn ghost small" id="hintBtn">Подсказка</button>
+      <button class="btn ghost small" id="repeatBtn">Ещё раз</button>
+      <button class="btn ghost small" id="skipBtn">Не знаю</button>
+    </div>
+
+    <div class="verdict" id="verdict" hidden>
+      <h2 id="verdictTitle"></h2>
+      <div class="spell" id="spell"></div>
+      <p class="tip" id="tip"></p>
+      <button class="btn" id="nextBtn">Дальше</button>
+    </div>
+  </section>
+
+  <!-- LEARN -->
+  <section class="card" id="learnCard" hidden>
+    <p class="prompt-label">Нажми на карточку — услышишь слово</p>
+    <div class="learn-grid" id="learnGrid"></div>
+    <div class="learn-note" id="learnNote"></div>
+  </section>
+
+  <div class="progress">
+    <h3>Выучено <em id="masteredCount">0 из 20</em></h3>
+    <div class="track" id="track"></div>
+  </div>
+
+  <div class="voicebar" id="voicebar">
+    <label for="voiceSel">Голос</label>
+    <select id="voiceSel" aria-label="Выбор голоса"></select>
+    <button class="btn ghost small" id="tryVoice">Проверить</button>
+  </div>
+
+  <p class="foot">Слово засчитано, когда написал его верно <b>три раза подряд</b>. <button id="resetBtn">Начать заново</button></p>
+</div>
+
+<div class="win" id="winOverlay" hidden>
+  <div class="win-box">
+    <h2>Все 20 чисел выучены!</h2>
+    <p id="winLine">Отличная работа.</p>
+    <button class="btn" id="winClose">Ещё разок</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var WORDS = ["one","two","three","four","five","six","seven","eight","nine","ten",
+               "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen",
+               "eighteen","nineteen","twenty"];
+
+  // Части, на которых чаще всего ошибаются (индексы букв для подсветки в режиме «Учим»)
+  var HL = {4:[0,1,2],8:[0,1,2,3],12:[0,1,2],13:[0,1,2,3],14:[0,1,2],15:[0,1,2],
+            17:[0,1,2,3,4],18:[0,1,2,3],20:[0,1,2,3]};
+
+  var TIPS = {
+    1:"Читается как «уан», но пишется с <b>o</b> в начале: <b>o</b>ne.",
+    2:"Немая <b>w</b> в середине: t<b>w</b>o.",
+    3:"Двойная <b>e</b> в конце: thr<b>ee</b>.",
+    4:"В four есть <b>u</b>. Запомни: four → fourteen, обе с u.",
+    5:"five → но в 15 будет <b>fif</b>teen, без «e».",
+    6:"Самое простое слово: six.",
+    7:"Два слога: se-ven, одна <b>v</b>.",
+    8:"Хитрое: e-i-g-h-t. Никакой «a».",
+    9:"nine — и 19 тоже через <b>nine</b>: nineteen.",
+    10:"ten — и внутри всех «-teen» слышится оно же.",
+    11:"Двойная <b>v</b>: ele<b>v</b>en, одна v, но две e.",
+    12:"Не «twelf»: twel<b>ve</b>.",
+    13:"Не three+teen! Пишем <b>thir</b>teen.",
+    14:"Как four: <b>four</b>teen, с u.",
+    15:"Не «fiveteen». Правильно <b>fif</b>teen.",
+    16:"Просто six + teen = sixteen.",
+    17:"seven + teen = seventeen, одно слово.",
+    18:"eight + teen, но <b>t</b> одна: eigh<b>t</b>een.",
+    19:"nine + teen = nineteen, <b>e</b> сохраняется.",
+    20:"Не «twentee»: twen<b>ty</b>, на конце -ty."
+  };
+
+  var KEY = "one-to-twenty-v1";
+
+  var state = {
+    mode:"dictation",
+    n:null,
+    score:0,
+    streak:0,
+    mastery:{},          // number -> 0..3 correct in a row
+    answered:false,
+    hintLevel:0,
+    askedAt:0
+  };
+
+  // ---------- storage (per-viewer convenience only) ----------
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return;
+      var d = JSON.parse(raw);
+      if(d && typeof d === "object"){
+        state.score = d.score || 0;
+        state.mastery = d.mastery || {};
+      }
+    }catch(e){}
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify({score:state.score, mastery:state.mastery})); }catch(e){}
+  }
+
+  // ---------- elements ----------
+  var $ = function(id){ return document.getElementById(id); };
+  var elScore=$("score"), elStreak=$("streak"), elStreakChip=$("streakChip");
+  var elPlay=$("playCard"), elLearn=$("learnCard");
+  var elLabel=$("promptLabel"), elListen=$("listenBtn");
+  var elDigitBox=$("digitBox"), elDigitValue=$("digitValue"), elSay=$("sayBtn");
+  var elSlots=$("slots"), elAnswer=$("answer"), elCheck=$("checkBtn");
+  var elHint=$("hintBtn"), elRepeat=$("repeatBtn"), elSkip=$("skipBtn");
+  var elVerdict=$("verdict"), elVerdictTitle=$("verdictTitle"), elSpell=$("spell"), elTip=$("tip"), elNext=$("nextBtn");
+  var elTrack=$("track"), elMastered=$("masteredCount");
+  var elLearnGrid=$("learnGrid"), elLearnNote=$("learnNote");
+  var elWin=$("winOverlay"), elWinClose=$("winClose"), elWinLine=$("winLine");
+
+  // ---------- speech ----------
+  var speechWorks = ("speechSynthesis" in window);
+  var voice = null, englishVoices = [], voicesLoaded = false;
+  var VKEY = "one-to-twenty-voice";
+
+  // Имена женских английских голосов на разных системах
+  var FEMALE = /\b(female|samantha|karen|serena|moira|tessa|fiona|allison|ava|susan|nicky|zoe|joelle|kate|stephanie|sandy|shelley|martha|catherine|jamie|aria|jenny|sonia|libby|michelle|emma|amber|ana|clara|natasha|hazel|zira|eva|linda|heather|salli|kimberly|joanna|ivy|kendra|kimberley|olivia|nova|isha|asteria)\b/i;
+  var MALE = /\b(male|daniel|alex|fred|tom|oliver|arthur|ryan|guy|george|james|david|mark|matthew|justin|joey|brian|aaron|gordon|nathan|rishi|liam|reed|eric|roger|steffan|thomas|albert|bad news|bahh|bells|boing|bubbles|cellos|jester|organ|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+  // «Живые» движки: Apple Enhanced/Premium/Siri, Microsoft Natural, Google
+  var NATURAL = /(natural|neural|premium|enhanced|siri|online|wavenet|journey)/i;
+
+  function scoreVoice(v){
+    var s = 0;
+    var name = v.name || "";
+    if(/^en-GB/i.test(v.lang)) s += 30;          // британский — как в школьных учебниках
+    else if(/^en-US/i.test(v.lang)) s += 26;
+    else if(/^en/i.test(v.lang)) s += 18;
+    if(FEMALE.test(name)) s += 40;
+    if(MALE.test(name)) s -= 40;
+    if(NATURAL.test(name)) s += 35;
+    if(/google/i.test(name)) s += 12;            // Google-голоса заметно живее стандартных
+    if(/compact|eloquence|espeak/i.test(name)) s -= 30;
+    if(v.localService === false) s += 6;
+    return s;
+  }
+
+  function refreshVoices(){
+    if(!speechWorks) return;
+    var all = window.speechSynthesis.getVoices() || [];
+    englishVoices = all.filter(function(v){ return /^en/i.test(v.lang); });
+    if(!englishVoices.length) return;
+
+    englishVoices.sort(function(a,b){ return scoreVoice(b) - scoreVoice(a); });
+
+    var saved = null;
+    try{ saved = localStorage.getItem(VKEY); }catch(e){}
+    voice = null;
+    if(saved){
+      for(var i=0;i<englishVoices.length;i++){
+        if(englishVoices[i].name === saved){ voice = englishVoices[i]; break; }
+      }
+    }
+    if(!voice) voice = englishVoices[0];
+    fillVoiceSelect();
+    voicesLoaded = true;
+    flushPending();
+  }
+
+  function prettyName(v){
+    var n = (v.name || "").replace(/\s*\((.*?)\)\s*$/, "");
+    var tag = /^en-GB/i.test(v.lang) ? "британский" : /^en-US/i.test(v.lang) ? "американский" : v.lang;
+    var extra = FEMALE.test(v.name) ? "женский" : MALE.test(v.name) ? "мужской" : "";
+    var bits = [tag]; if(extra) bits.push(extra);
+    if(NATURAL.test(v.name)) bits.push("живой");
+    return n + " — " + bits.join(", ");
+  }
+
+  function fillVoiceSelect(){
+    var sel = document.getElementById("voiceSel");
+    if(!sel) return;
+    sel.innerHTML = "";
+    for(var i=0;i<englishVoices.length;i++){
+      var o = document.createElement("option");
+      o.value = englishVoices[i].name;
+      o.textContent = prettyName(englishVoices[i]);
+      if(voice && englishVoices[i].name === voice.name) o.selected = true;
+      sel.appendChild(o);
+    }
+  }
+
+  if(speechWorks){
+    refreshVoices();
+    window.speechSynthesis.addEventListener
+      ? window.speechSynthesis.addEventListener("voiceschanged", refreshVoices)
+      : (window.speechSynthesis.onvoiceschanged = refreshVoices);
+    // Safari/iOS иногда отдают список с задержкой
+    setTimeout(refreshVoices, 350);
+    setTimeout(refreshVoices, 1200);
+    // Если список так и не приехал — говорим системным голосом по умолчанию
+    setTimeout(function(){
+      if(!voicesLoaded){ voicesLoaded = true; flushPending(); }
+    }, 1800);
+  }
+
+  // Проигрывание. Одна очередь: новый вызов отменяет всё, что не успело прозвучать,
+  // поэтому слово не может начаться дважды.
+  var speakTimer = null, pendingSpeak = null;
+
+  function flushPending(){
+    if(pendingSpeak !== null){
+      var n = pendingSpeak;
+      pendingSpeak = null;
+      speak(n, 0);
+    }
+  }
+
+  function utter(n){
+    try{
+      var word = WORDS[n-1];
+      // Заглавная буква и точка дают движку интонацию фразы — звучит живее, чем голое слово
+      var u = new SpeechSynthesisUtterance(word.charAt(0).toUpperCase() + word.slice(1) + ".");
+      u.lang = (voice && voice.lang) ? voice.lang : "en-GB";
+      if(voice) u.voice = voice;
+      u.rate = 0.92;
+      u.pitch = 1.08;
+      u.volume = 1;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  function speak(n, delay){
+    if(!speechWorks || !n) return;
+
+    // До загрузки списка голосов браузер может проговорить фразу дважды — ждём
+    if(!voicesLoaded){ pendingSpeak = n; return; }
+
+    if(speakTimer){ clearTimeout(speakTimer); speakTimer = null; }
+
+    var wait = (typeof delay === "number") ? delay : 0;
+    try{
+      var s = window.speechSynthesis;
+      if(s.speaking || s.pending){
+        s.cancel();
+        // cancel() отрабатывает асинхронно: speak() сразу после него рвёт начало слова
+        wait = Math.max(wait, 140);
+      }else{
+        wait = Math.max(wait, 20);
+      }
+      speakTimer = setTimeout(function(){
+        speakTimer = null;
+        utter(n);
+      }, wait);
+    }catch(e){}
+  }
+
+  // ---------- sound effects ----------
+  var ac = null;
+  function tone(freqs, dur){
+    try{
+      if(!ac){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; ac = new AC(); }
+      if(ac.state === "suspended") ac.resume();
+      var t0 = ac.currentTime;
+      for(var i=0;i<freqs.length;i++){
+        var o = ac.createOscillator(), g = ac.createGain();
+        o.type = "triangle"; o.frequency.value = freqs[i];
+        var s = t0 + i*dur*0.7;
+        g.gain.setValueAtTime(0.0001, s);
+        g.gain.exponentialRampToValueAtTime(0.16, s+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, s+dur);
+        o.connect(g); g.connect(ac.destination);
+        o.start(s); o.stop(s+dur+0.02);
+      }
+    }catch(e){}
+  }
+  var dingUp = function(){ tone([660,880,1180], 0.16); };
+  var dingDown = function(){ tone([300,225], 0.2); };
+
+  // ---------- progress board ----------
+  function masteryOf(n){ return state.mastery[n] || 0; }
+  function masteredTotal(){
+    var c = 0;
+    for(var n=1;n<=20;n++){ if(masteryOf(n) >= 3) c++; }
+    return c;
+  }
+  function buildTrack(){
+    elTrack.innerHTML = "";
+    for(var n=1;n<=20;n++){
+      var c = document.createElement("div");
+      c.className = "cell";
+      c.id = "cell"+n;
+      c.textContent = n;
+      elTrack.appendChild(c);
+    }
+  }
+  function paintTrack(){
+    for(var n=1;n<=20;n++){
+      var c = $("cell"+n);
+      if(!c) continue;
+      var m = masteryOf(n);
+      c.className = "cell" + (m>=3 ? " l2" : m>0 ? " l1" : "") + (state.n===n && state.mode!=="learn" ? " now" : "");
+      c.title = WORDS[n-1] + " — " + m + " из 3";
+    }
+    var done = masteredTotal();
+    elMastered.textContent = done + " из 20";
+  }
+
+  // ---------- question picking ----------
+  function nextNumber(){
+    var pool = [];
+    for(var n=1;n<=20;n++){
+      var m = masteryOf(n);
+      var weight = m >= 3 ? 1 : (4 - m);   // непройденные встречаются чаще
+      if(n === state.n) weight = Math.max(0, weight - 3);
+      for(var w=0; w<weight; w++) pool.push(n);
+    }
+    if(!pool.length) pool = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+
+  // ---------- rendering the round ----------
+  function renderSlots(){
+    var w = WORDS[state.n-1];
+    var out = "";
+    if(state.hintLevel === 0){ elSlots.textContent = ""; return; }
+    for(var i=0;i<w.length;i++){
+      if(state.hintLevel === 1) out += (i === 0 ? w[0] : "_");
+      else out += (i < Math.ceil(w.length/2) ? w[i] : "_");
+    }
+    elSlots.textContent = out.split("").join(" ");
+  }
+
+  function newRound(speakIt){
+    state.n = nextNumber();
+    state.answered = false;
+    state.hintLevel = 0;
+    state.askedAt = Date.now();
+    elVerdict.hidden = true;
+    elAnswer.value = "";
+    elAnswer.disabled = false;
+    elSlots.textContent = "";
+    elCheck.hidden = false;
+
+    var dictation = (state.mode === "dictation") && speechWorks;
+    elListen.hidden = !dictation;
+    elDigitBox.hidden = dictation;
+    elLabel.textContent = dictation ? "Нажми и послушай число" : "Напиши это число словами";
+    elRepeat.hidden = !speechWorks;
+
+    if(!dictation){
+      elDigitValue.textContent = state.n;
+      elDigitBox.classList.remove("pop");
+      void elDigitBox.offsetWidth;
+      elDigitBox.classList.add("pop");
+    }
+
+    paintTrack();
+    if(speakIt && dictation) speak(state.n);
+    elAnswer.focus();
+  }
+
+  function normalize(s){
+    return (s||"").toLowerCase().replace(/[^a-z]/g, "");
+  }
+
+  function showSpelling(userWord){
+    var right = WORDS[state.n-1];
+    elSpell.innerHTML = "";
+    for(var i=0;i<right.length;i++){
+      var span = document.createElement("span");
+      span.textContent = right[i];
+      if(userWord !== null && userWord[i] !== right[i]) span.className = "miss";
+      elSpell.appendChild(span);
+    }
+  }
+
+  function finish(correct, userWord){
+    state.answered = true;
+    elAnswer.disabled = true;
+    elCheck.hidden = true;
+    elVerdict.hidden = false;
+    elVerdict.className = "verdict " + (correct ? "good" : "bad");
+
+    var m = masteryOf(state.n);
+    if(correct){
+      var fast = (Date.now() - state.askedAt) < 6000;
+      var gain = 1 + (state.hintLevel ? 0 : 1) + (fast ? 1 : 0);
+      state.score += gain;
+      state.streak += 1;
+      state.mastery[state.n] = Math.min(3, m + 1);
+      elVerdictTitle.textContent = state.streak >= 5
+        ? "Верно! " + state.streak + " подряд — так держать"
+        : "Верно! +" + gain;
+      showSpelling(null);
+      dingUp();
+    }else{
+      state.streak = 0;
+      state.mastery[state.n] = 0;
+      elVerdictTitle.textContent = "Почти. Смотри, где буквы разошлись";
+      showSpelling(userWord);
+      dingDown();
+    }
+
+    elTip.innerHTML = (state.n) + " — <b>" + WORDS[state.n-1] + "</b>. " + TIPS[state.n];
+    speak(state.n, correct ? 420 : 680);   // даём отзвучать сигналу
+
+    save();
+    paintScore();
+    paintTrack();
+    elNext.focus();
+
+    if(masteredTotal() === 20 && correct){
+      elWinLine.textContent = "Все двадцать слов написаны верно по три раза. Очков: " + state.score + ".";
+      elWin.hidden = false;
+    }
+  }
+
+  function check(){
+    if(state.answered || !state.n) return;
+    var user = normalize(elAnswer.value);
+    if(!user) { elAnswer.focus(); return; }
+    finish(user === WORDS[state.n-1], user);
+  }
+
+  function paintScore(){
+    elScore.textContent = state.score;
+    elStreak.textContent = state.streak;
+    elStreakChip.className = "chip" + (state.streak >= 3 ? " streak-hot" : "");
+  }
+
+  // ---------- learn mode ----------
+  function buildLearn(){
+    elLearnGrid.innerHTML = "";
+    for(var n=1;n<=20;n++){
+      (function(num){
+        var w = WORDS[num-1];
+        var cell = document.createElement("button");
+        cell.className = "learn-cell";
+        cell.type = "button";
+        var marks = HL[num] || [];
+        var html = "";
+        for(var i=0;i<w.length;i++){
+          html += marks.indexOf(i) >= 0 ? "<u>"+w[i]+"</u>" : w[i];
+        }
+        cell.innerHTML = '<span class="n">'+num+'</span><span class="w">'+html+'</span>';
+        cell.addEventListener("click", function(){
+          speak(num);
+          elLearnNote.innerHTML = num + " — <b>" + w + "</b>. " + TIPS[num];
+        });
+        elLearnGrid.appendChild(cell);
+      })(n);
+    }
+    elLearnNote.innerHTML = "Жёлтым выделены места, где чаще всего ошибаются: <b>thir</b>teen, <b>fif</b>teen, <b>four</b>teen, eigh<b>t</b>een, twen<b>ty</b>.";
+  }
+
+  // ---------- mode switching ----------
+  function setMode(mode){
+    state.mode = mode;
+    $("mDictation").setAttribute("aria-pressed", mode === "dictation");
+    $("mFlash").setAttribute("aria-pressed", mode === "flash");
+    $("mLearn").setAttribute("aria-pressed", mode === "learn");
+    elPlay.hidden = (mode === "learn");
+    elLearn.hidden = (mode !== "learn");
+    if(mode === "learn"){ paintTrack(); return; }
+    newRound(false);
+    if(mode === "dictation" && speechWorks) speak(state.n);
+  }
+
+  // ---------- wiring ----------
+  elListen.addEventListener("click", function(){
+    speak(state.n);
+    elListen.classList.remove("ringing");
+    void elListen.offsetWidth;
+    elListen.classList.add("ringing");
+    elAnswer.focus();
+  });
+  elSay.addEventListener("click", function(){ speak(state.n); elAnswer.focus(); });
+  elRepeat.addEventListener("click", function(){ speak(state.n); elAnswer.focus(); });
+  elCheck.addEventListener("click", check);
+
+  // Защита от двойного перелистывания (клик + Enter по одной и той же кнопке)
+  var lastAdvance = 0;
+  function advance(){
+    if(Date.now() - lastAdvance < 250) return;
+    lastAdvance = Date.now();
+    newRound(true);
+  }
+  elNext.addEventListener("click", advance);
+
+  elHint.addEventListener("click", function(){
+    if(state.answered) return;
+    state.hintLevel = Math.min(2, state.hintLevel + 1);
+    renderSlots();
+    elAnswer.focus();
+  });
+
+  elSkip.addEventListener("click", function(){
+    if(state.answered || !state.n) return;
+    finish(false, "");
+  });
+
+  elAnswer.addEventListener("keydown", function(e){
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    e.stopPropagation();   // иначе тот же Enter долетит до document и сразу перелистнёт слово
+    check();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key !== "Enter") return;
+    if(!state.answered || !elWin.hidden) return;
+    if(e.target === elNext) return;       // кнопка сама сработает по Enter
+    e.preventDefault();
+    advance();
+  });
+
+  $("mDictation").addEventListener("click", function(){ setMode("dictation"); });
+  $("mFlash").addEventListener("click", function(){ setMode("flash"); });
+  $("mLearn").addEventListener("click", function(){ setMode("learn"); });
+
+  elWinClose.addEventListener("click", function(){
+    elWin.hidden = true;
+    state.mastery = {};
+    state.streak = 0;
+    save();
+    newRound(true);
+  });
+
+  $("voiceSel").addEventListener("change", function(){
+    var name = this.value;
+    for(var i=0;i<englishVoices.length;i++){
+      if(englishVoices[i].name === name){ voice = englishVoices[i]; break; }
+    }
+    try{ localStorage.setItem(VKEY, name); }catch(e){}
+    speak(state.n || 7);
+  });
+
+  $("tryVoice").addEventListener("click", function(){ speak(state.n || 7); });
+
+  $("resetBtn").addEventListener("click", function(){
+    state.mastery = {}; state.score = 0; state.streak = 0;
+    save(); paintScore(); paintTrack();
+    if(state.mode !== "learn") newRound(false);
+  });
+
+  // ---------- boot ----------
+  load();
+  buildTrack();
+  buildLearn();
+  paintScore();
+  if(!speechWorks){
+    elLabel.textContent = "Напиши это число словами";
+    var vb = $("voicebar");
+    vb.innerHTML = '<p class="warn">В этом браузере нет синтеза речи — работает режим «Молния».</p>';
+  }
+  setMode("dictation");
+  elVerdict.hidden = true;
+})();
+</script>
