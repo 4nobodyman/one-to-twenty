@@ -492,8 +492,8 @@
     7:"Два слога: se-ven, одна <b>v</b>.",
     8:"Хитрое: e-i-g-h-t. Никакой «a».",
     9:"nine — и 19 тоже через <b>nine</b>: nineteen.",
-    10:"ten — и внутри всех «-teen» слышится оно же.",
-    11:"Двойная <b>v</b>: ele<b>v</b>en, одна v, но две e.",
+    10:"10 — ten. Запомни три буквы: <b>t-e-n</b>.",
+    11:"В eleven одна <b>v</b> и три буквы <b>e</b>: <b>e</b>l<b>e</b>v<b>e</b>n.",
     12:"Не «twelf»: twel<b>ve</b>.",
     13:"Не three+teen! Пишем <b>thir</b>teen.",
     14:"Как four: <b>four</b>teen, с u.",
@@ -936,7 +936,8 @@
     if(TIPS[n]) return TIPS[n];
     if(n === 100) return "100 — <b>one hundred</b>: перед hundred в этом числе стоит one.";
     var word = wordOf(n);
-    return n + " — <b>" + word + "</b>. Числа от 21 до 99 пишутся через дефис: десяток + единицы.";
+    if(n%10 === 0) return n + " — <b>" + word + "</b>. Круглый десяток пишется одним словом, без дефиса." + (n === 40 ? " В forty нет буквы <b>u</b>." : "");
+    return n + " — <b>" + word + "</b>. Составные числа от 21 до 99 пишутся через дефис: десяток + единицы.";
   }
 
   function finish(correct, userWord){
@@ -1045,7 +1046,7 @@
       })(n);
     }
     elLearnNote.innerHTML = state.rangeTo > 20
-      ? "Числа от 21 до 99 образуются из десятка и единиц и пишутся через дефис: <b>twenty-one</b>. 100 — <b>one hundred</b>."
+      ? "Составные числа от 21 до 99 пишутся через дефис: <b>twenty-one</b>. Круглые десятки пишутся одним словом: <b>forty</b>. 100 — <b>one hundred</b>."
       : "Жёлтым выделены места, где чаще всего ошибаются: <b>thir</b>teen, <b>fif</b>teen, <b>four</b>teen, eigh<b>t</b>een, twen<b>ty</b>.";
   }
 
