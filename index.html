@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#141328" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>One to Twenty</title>
+<title>One to Hundred</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
@@ -136,6 +136,12 @@
     color:var(--muted);transition:background .15s, color .15s;
   }
   .modes button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);}
+
+  .rangebar{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;box-shadow:var(--shadow-sm);}
+  .rangebar label{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);}
+  .rangebar select{font:700 14px "Nunito",system-ui,sans-serif;padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);}
+  .rangebar .range-dash{color:var(--muted);font-weight:800;}
+  .rangebar .range-caption{font-size:12px;color:var(--muted);font-weight:600;}
 
   /* ---------- play card ---------- */
   .card{
@@ -315,6 +321,7 @@
     .cheer{font-size:15.5px;}
     .tip{font-size:13px;}
     .voicebar{padding:7px 10px;gap:6px;}
+    .rangebar{padding:7px 10px;gap:6px;}
     .voicebar select{min-width:0;font-size:13px;}
     .voicebar .btn.small{min-height:38px;}
     .progress h3{margin-bottom:6px;}
@@ -353,7 +360,7 @@
 
 <div class="app">
   <div class="top">
-    <h1 class="brand"><b>One to Twenty</b> <span>числа прописью</span></h1>
+    <h1 class="brand"><b>One to Hundred</b> <span>числа прописью</span></h1>
     <div class="scoreboard">
       <div class="chip"><small>очки</small><span id="score">0</span></div>
       <div class="chip" id="streakChip"><small>подряд</small><span id="streak">0</span></div>
@@ -364,6 +371,14 @@
     <button id="mDictation" aria-pressed="true">Диктант</button>
     <button id="mFlash" aria-pressed="false">Молния</button>
     <button id="mLearn" aria-pressed="false">Учим слова</button>
+  </div>
+
+  <div class="rangebar" aria-label="Диапазон изучения">
+    <label for="rangeFrom">Диапазон</label>
+    <select id="rangeFrom" aria-label="Начало диапазона"></select>
+    <span class="range-dash">—</span>
+    <select id="rangeTo" aria-label="Конец диапазона"></select>
+    <span class="range-caption">из 100</span>
   </div>
 
   <!-- PLAY -->
@@ -440,7 +455,7 @@
 
 <div class="win" id="winOverlay" hidden>
   <div class="win-box">
-    <h2 id="winTitle">Все 20 чисел выучены!</h2>
+    <h2 id="winTitle">Диапазон выучен!</h2>
     <p id="winLine">Отличная работа.</p>
     <button class="btn" id="winClose">Ещё разок</button>
   </div>
@@ -453,6 +468,15 @@
   var WORDS = ["one","two","three","four","five","six","seven","eight","nine","ten",
                "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen",
                "eighteen","nineteen","twenty"];
+  var TENS = {20:"twenty",30:"thirty",40:"forty",50:"fifty",60:"sixty",70:"seventy",80:"eighty",90:"ninety"};
+  function wordOf(n){
+    if(n <= 20) return WORDS[n-1];
+    if(n < 100){
+      var ten = Math.floor(n/10)*10, unit = n%10;
+      return TENS[ten] + (unit ? "-" + WORDS[unit-1] : "");
+    }
+    return "one hundred";
+  }
 
   // Части, на которых чаще всего ошибаются (индексы букв для подсветки в режиме «Учим»)
   var HL = {4:[0,1,2],8:[0,1,2,3],12:[0,1,2],13:[0,1,2,3],14:[0,1,2],15:[0,1,2],
@@ -531,6 +555,8 @@
     name:"",
     named:false,        // имя уже спрашивали (или ребёнок отказался)
     mode:"dictation",
+    rangeFrom:1,
+    rangeTo:20,
     n:null,
     score:0,
     streak:0,
@@ -551,12 +577,15 @@
         state.mastery = d.mastery || {};
         state.name = typeof d.name === "string" ? d.name : "";
         state.named = !!d.named;
+        state.rangeFrom = Math.max(1, Math.min(100, Number(d.rangeFrom) || 1));
+        state.rangeTo = Math.max(state.rangeFrom, Math.min(100, Number(d.rangeTo) || 20));
       }
     }catch(e){}
   }
   function save(){
     try{ localStorage.setItem(KEY, JSON.stringify({
-      score:state.score, mastery:state.mastery, name:state.name, named:state.named
+      score:state.score, mastery:state.mastery, name:state.name, named:state.named,
+      rangeFrom:state.rangeFrom, rangeTo:state.rangeTo
     })); }catch(e){}
   }
 
@@ -572,6 +601,7 @@
   var elCheer=$("cheer"), elHello=$("hello");
   var elNameOv=$("nameOverlay"), elNameInput=$("nameInput");
   var elTrack=$("track"), elMastered=$("masteredCount");
+  var elRangeFrom=$("rangeFrom"), elRangeTo=$("rangeTo");
   var elLearnGrid=$("learnGrid"), elLearnNote=$("learnNote");
   var elWin=$("winOverlay"), elWinClose=$("winClose"), elWinLine=$("winLine"), elWinTitle=$("winTitle");
 
@@ -673,7 +703,7 @@
 
   function utter(n){
     try{
-      var word = WORDS[n-1];
+      var word = wordOf(n);
       // Заглавная буква и точка дают движку интонацию фразы — звучит живее, чем голое слово
       var u = new SpeechSynthesisUtterance(word.charAt(0).toUpperCase() + word.slice(1) + ".");
       u.lang = (voice && voice.lang) ? voice.lang : "en-GB";
@@ -736,12 +766,12 @@
   function masteryOf(n){ return state.mastery[n] || 0; }
   function masteredTotal(){
     var c = 0;
-    for(var n=1;n<=20;n++){ if(masteryOf(n) >= 3) c++; }
+    for(var n=state.rangeFrom;n<=state.rangeTo;n++){ if(masteryOf(n) >= 3) c++; }
     return c;
   }
   function buildTrack(){
     elTrack.innerHTML = "";
-    for(var n=1;n<=20;n++){
+    for(var n=state.rangeFrom;n<=state.rangeTo;n++){
       var c = document.createElement("div");
       c.className = "cell";
       c.id = "cell"+n;
@@ -750,33 +780,33 @@
     }
   }
   function paintTrack(){
-    for(var n=1;n<=20;n++){
+    for(var n=state.rangeFrom;n<=state.rangeTo;n++){
       var c = $("cell"+n);
       if(!c) continue;
       var m = masteryOf(n);
       c.className = "cell" + (m>=3 ? " l2" : m>0 ? " l1" : "") + (state.n===n && state.mode!=="learn" ? " now" : "");
-      c.title = WORDS[n-1] + " — " + m + " из 3";
+      c.title = wordOf(n) + " — " + m + " из 3";
     }
     var done = masteredTotal();
-    elMastered.textContent = done + " из 20";
+    elMastered.textContent = done + " из " + (state.rangeTo-state.rangeFrom+1);
   }
 
   // ---------- question picking ----------
   function nextNumber(){
     var pool = [];
-    for(var n=1;n<=20;n++){
+    for(var n=state.rangeFrom;n<=state.rangeTo;n++){
       var m = masteryOf(n);
       var weight = m >= 3 ? 1 : (4 - m);   // непройденные встречаются чаще
       if(n === state.n) weight = Math.max(0, weight - 3);
       for(var w=0; w<weight; w++) pool.push(n);
     }
-    if(!pool.length) pool = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+    if(!pool.length) for(var f=state.rangeFrom;f<=state.rangeTo;f++) pool.push(f);
     return pool[Math.floor(Math.random()*pool.length)];
   }
 
   // ---------- rendering the round ----------
   function renderSlots(){
-    var w = WORDS[state.n-1];
+    var w = wordOf(state.n);
     var out = "";
     if(state.hintLevel === 0){ elSlots.textContent = ""; return; }
     for(var i=0;i<w.length;i++){
@@ -864,12 +894,15 @@
     elCheer.classList.add("pop");
   }
   function praise(mastered, tier){
-    var word = WORDS[state.n-1];
+    var word = wordOf(state.n);
     var parts = [];
     if(mastered){
       parts.push(fill(pick(CHEER_MASTER), {word:word, num:state.n}));
       var total = masteredTotal();
-      if(CHEER_HALF[total]) parts.push(fill(pick(CHEER_HALF[total])));
+      var size = state.rangeTo-state.rangeFrom+1;
+      var milestones = [Math.round(size*.25), Math.round(size*.5), Math.round(size*.75)];
+      if(size === 20 && CHEER_HALF[total]) parts.push(fill(pick(CHEER_HALF[total])));
+      else if(total < size && milestones.indexOf(total) >= 0) parts.push("Уже " + total + " из " + size + " чисел в диапазоне!");
       if(tier) parts.push("И это " + state.streak + " подряд!");
     }else if(tier){
       parts.push(tier === "big"
@@ -880,14 +913,26 @@
   }
 
   function showSpelling(userWord){
-    var right = WORDS[state.n-1];
+    var right = wordOf(state.n);
     elSpell.innerHTML = "";
+    var letterIndex = 0;
     for(var i=0;i<right.length;i++){
+      if(!/[a-z]/.test(right[i])){
+        elSpell.appendChild(document.createTextNode(right[i]));
+        continue;
+      }
       var span = document.createElement("span");
       span.textContent = right[i];
-      if(userWord !== null && userWord[i] !== right[i]) span.className = "miss";
+      if(userWord !== null && userWord[letterIndex] !== right[i]) span.className = "miss";
       elSpell.appendChild(span);
+      letterIndex++;
     }
+  }
+
+  function tipFor(n){
+    if(TIPS[n]) return TIPS[n];
+    if(n === 100) return "100 — <b>one hundred</b>: перед hundred в этом числе стоит one.";
+    return n + " — <b>" + word + "</b>. Числа от 21 до 99 пишутся через дефис: десяток + единицы.";
   }
 
   function finish(correct, userWord){
@@ -918,7 +963,7 @@
       dingDown();
     }
 
-    elTip.innerHTML = (state.n) + " — <b>" + WORDS[state.n-1] + "</b>. " + TIPS[state.n];
+    elTip.innerHTML = tipFor(state.n);
     speak(state.n, correct ? 420 : 680);   // даём отзвучать сигналу
 
     save();
@@ -926,11 +971,11 @@
     paintTrack();
     elNext.focus();
 
-    if(masteredTotal() === 20 && correct){
+    if(masteredTotal() === state.rangeTo-state.rangeFrom+1 && correct && m < 3 && state.mastery[state.n] === 3){
       elWinTitle.textContent = state.name
-        ? state.name + ", все 20 чисел выучены!"
-        : "Все 20 чисел выучены!";
-      elWinLine.textContent = "Все двадцать слов написаны верно по три раза. Очков: " + state.score + ".";
+        ? state.name + ", весь диапазон выучен!"
+        : "Весь диапазон выучен!";
+      elWinLine.textContent = "Все числа с " + state.rangeFrom + " по " + state.rangeTo + " написаны верно по три раза. Очков: " + state.score + ".";
       elWin.hidden = false;
     }
   }
@@ -939,7 +984,7 @@
     if(state.answered || !state.n) return;
     var user = normalize(elAnswer.value);
     if(!user) { elAnswer.focus(); return; }
-    finish(user === WORDS[state.n-1], user);
+    finish(user === wordOf(state.n), user);
   }
 
   function paintScore(){
@@ -976,9 +1021,9 @@
   // ---------- learn mode ----------
   function buildLearn(){
     elLearnGrid.innerHTML = "";
-    for(var n=1;n<=20;n++){
+    for(var n=state.rangeFrom;n<=state.rangeTo;n++){
       (function(num){
-        var w = WORDS[num-1];
+        var w = wordOf(num);
         var cell = document.createElement("button");
         cell.className = "learn-cell";
         cell.type = "button";
@@ -990,12 +1035,14 @@
         cell.innerHTML = '<span class="n">'+num+'</span><span class="w">'+html+'</span>';
         cell.addEventListener("click", function(){
           speak(num);
-          elLearnNote.innerHTML = num + " — <b>" + w + "</b>. " + TIPS[num];
+          elLearnNote.innerHTML = tipFor(num);
         });
         elLearnGrid.appendChild(cell);
       })(n);
     }
-    elLearnNote.innerHTML = "Жёлтым выделены места, где чаще всего ошибаются: <b>thir</b>teen, <b>fif</b>teen, <b>four</b>teen, eigh<b>t</b>een, twen<b>ty</b>.";
+    elLearnNote.innerHTML = state.rangeTo > 20
+      ? "Числа от 21 до 99 образуются из десятка и единиц и пишутся через дефис: <b>twenty-one</b>. 100 — <b>one hundred</b>."
+      : "Жёлтым выделены места, где чаще всего ошибаются: <b>thir</b>teen, <b>fif</b>teen, <b>four</b>teen, eigh<b>t</b>een, twen<b>ty</b>.";
   }
 
   // ---------- mode switching ----------
@@ -1009,6 +1056,37 @@
     if(mode === "learn"){ paintTrack(); return; }
     newRound(false);
     if(mode === "dictation" && speechWorks) speak(state.n);
+  }
+
+  function initRangeControls(){
+    for(var n=1;n<=100;n++){
+      var fromOption = document.createElement("option");
+      fromOption.value = fromOption.textContent = n;
+      elRangeFrom.appendChild(fromOption);
+      var toOption = document.createElement("option");
+      toOption.value = toOption.textContent = n;
+      elRangeTo.appendChild(toOption);
+    }
+    elRangeFrom.value = state.rangeFrom;
+    elRangeTo.value = state.rangeTo;
+  }
+  function applyRange(){
+    state.rangeFrom = Number(elRangeFrom.value);
+    state.rangeTo = Number(elRangeTo.value);
+    if(state.rangeFrom > state.rangeTo){
+      if(document.activeElement === elRangeFrom){
+        state.rangeTo = state.rangeFrom;
+        elRangeTo.value = state.rangeTo;
+      }else{
+        state.rangeFrom = state.rangeTo;
+        elRangeFrom.value = state.rangeFrom;
+      }
+    }
+    save();
+    buildTrack();
+    buildLearn();
+    paintTrack();
+    if(state.mode !== "learn") newRound(false);
   }
 
   // ---------- wiring ----------
@@ -1061,10 +1139,12 @@
   $("mDictation").addEventListener("click", function(){ setMode("dictation"); });
   $("mFlash").addEventListener("click", function(){ setMode("flash"); });
   $("mLearn").addEventListener("click", function(){ setMode("learn"); });
+  elRangeFrom.addEventListener("change", applyRange);
+  elRangeTo.addEventListener("change", applyRange);
 
   elWinClose.addEventListener("click", function(){
     elWin.hidden = true;
-    state.mastery = {};
+    for(var n=state.rangeFrom;n<=state.rangeTo;n++) delete state.mastery[n];
     state.streak = 0;
     save();
     newRound(true);
@@ -1103,6 +1183,7 @@
 
   // ---------- boot ----------
   load();
+  initRangeControls();
   buildTrack();
   buildLearn();
   paintScore();
