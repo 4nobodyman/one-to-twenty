@@ -932,6 +932,7 @@
   function tipFor(n){
     if(TIPS[n]) return TIPS[n];
     if(n === 100) return "100 — <b>one hundred</b>: перед hundred в этом числе стоит one.";
+    var word = wordOf(n);
     return n + " — <b>" + word + "</b>. Числа от 21 до 99 пишутся через дефис: десяток + единицы.";
   }
 
