@@ -505,6 +505,29 @@
     20:"Не «twentee»: twen<b>ty</b>, на конце -ty."
   };
 
+  // Подсказки для составных чисел: отдельно разбираем десяток и единицы.
+  var TENS_TIPS = {
+    20:"В t<b>w</b>enty сохраняется w, а на конце — <b>-ty</b>.",
+    30:"Как в thirteen: начало <b>thir</b>-, но конец <b>-ty</b> — thir<b>ty</b>.",
+    40:"В <b>forty</b> нет u: four → forty, буква u исчезает.",
+    50:"Не «fivety»: начало <b>fif</b>-, как в fifteen, и конец <b>-ty</b>.",
+    60:"Собери десяток из знакомых частей: <b>six + ty = sixty</b>.",
+    70:"Слово seven сохраняется целиком: <b>seven + ty = seventy</b>.",
+    80:"В eigh<b>t</b>y только одна t: <b>eight + y</b>, без лишней t.",
+    90:"В nin<b>e</b>ty сохраняется e из nine: <b>nine + ty</b>."
+  };
+  var UNIT_TIPS = {
+    1:"В <b>one</b> первая буква — o, не w.",
+    2:"В t<b>w</b>o не забудь немую w.",
+    3:"В thr<b>ee</b> две e подряд.",
+    4:"В <b>four</b> есть u: f-o-u-r.",
+    5:"Вторая часть — <b>five</b>, с окончанием -ve.",
+    6:"В <b>six</b> всего три буквы: s-i-x.",
+    7:"В se<b>v</b>en одна v.",
+    8:"Порядок букв в <b>eight</b>: e-i-g-h-t.",
+    9:"В nin<b>e</b> последняя e сохраняется."
+  };
+
   var KEY = "one-to-twenty-v1";
 
   // ---------- похвала ----------
@@ -934,10 +957,12 @@
 
   function tipFor(n){
     if(TIPS[n]) return TIPS[n];
-    if(n === 100) return "100 — <b>one hundred</b>: перед hundred в этом числе стоит one.";
+    if(n === 100) return "100 — <b>one hundred</b>. Два слова с пробелом. В hun<b>d</b>re<b>d</b> две d: одна в середине, другая в конце.";
     var word = wordOf(n);
-    if(n%10 === 0) return n + " — <b>" + word + "</b>. Круглый десяток пишется одним словом, без дефиса." + (n === 40 ? " В forty нет буквы <b>u</b>." : "");
-    return n + " — <b>" + word + "</b>. Составные числа от 21 до 99 пишутся через дефис: десяток + единицы.";
+    var ten = Math.floor(n/10)*10, unit = n%10;
+    var heading = n + " — <b>" + word + "</b>. ";
+    if(!unit) return heading + TENS_TIPS[ten] + " Пишем одним словом, без дефиса.";
+    return heading + TENS_TIPS[ten] + " " + UNIT_TIPS[unit] + " Две части соединяет дефис.";
   }
 
   function finish(correct, userWord){
