@@ -870,15 +870,18 @@
     }else{
       // без имени убираем обращение целиком, не ломая предложение
       t = t.replace(/\{name\}, /g, "").replace(/,? \{name\}/g, "").replace(/\{name\}/g, "ты");
+    }
+    t = t.replace(/\{word\}/g, vars.word || "")
+         .replace(/\{num\}/g, vars.num || "")
+         .replace(/\{n\}/g, vars.n || "");
+    if(!state.name){
       // заглавная в начале каждого предложения, даже если перед словом смайлик;
       // сегмент, начинающийся с тега (<b>word</b>), не трогаем
       t = t.split(/([.!?]+\s*)/).map(function(part){
         return part.replace(/^([^\p{L}<]*)(\p{Ll})/u, function(_, pre, ch){ return pre + ch.toUpperCase(); });
       }).join("");
     }
-    return t.replace(/\{word\}/g, vars.word || "")
-            .replace(/\{num\}/g, vars.num || "")
-            .replace(/\{n\}/g, vars.n || "");
+    return t;
   }
   function streakTier(n){
     if(CHEER_STREAK[n]) return n;
