@@ -984,7 +984,7 @@
     if(state.answered || !state.n) return;
     var user = normalize(elAnswer.value);
     if(!user) { elAnswer.focus(); return; }
-    finish(user === wordOf(state.n), user);
+    finish(user === normalize(wordOf(state.n)), user);
   }
 
   function paintScore(){
